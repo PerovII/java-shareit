@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Booking {
 
-    Long id;
-    LocalDateTime start;
-    LocalDateTime end;
-    Long booker;
-    BookingStatus status;
+   private Long id;
+   private LocalDateTime start;
+   private LocalDateTime end;
+   private Long booker;
+   private BookingStatus status;
 
 }
 
