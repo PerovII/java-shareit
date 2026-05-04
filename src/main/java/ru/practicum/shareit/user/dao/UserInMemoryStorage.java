@@ -3,9 +3,9 @@ package ru.practicum.shareit.user.dao;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.user.UserStorage;
 import ru.practicum.shareit.user.model.User;
-
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,12 +13,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class UserInMemoryStorage implements UserStorage {
 
     private final Map<Long, User> users = new ConcurrentHashMap<>();
+    private final Set<String> emails = ConcurrentHashMap.newKeySet();
     private final AtomicLong idGenerator = new AtomicLong();
 
     @Override
     public User create(User user) {
         user.setId(idGenerator.incrementAndGet());
         users.put(user.getId(), user);
+        emails.add(user.getEmail());
         return user;
     }
 
@@ -29,10 +31,7 @@ public class UserInMemoryStorage implements UserStorage {
 
     @Override
     public boolean existsByEmail(String email) {
-        return users
-                .values()
-                .stream()
-                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email));
+        return emails.contains(email);
     }
 
     @Override

@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
 
     public UserDto create(NewUserDto request) {
         User user = UserMapper.mapToUser(request);
-        if (userStorage.existsByEmail(request.getEmail()))
+        if (userStorage.existsByEmail(user.getEmail()))
             throw new EmailExistsException("Указанная электронная почта уже используется");
         user = userStorage.create(user);
 
