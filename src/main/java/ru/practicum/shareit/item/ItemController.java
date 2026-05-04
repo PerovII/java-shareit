@@ -4,11 +4,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.constant.HeaderConstants;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.NewItemDto;
 import ru.practicum.shareit.item.dto.UpdateItemDto;
 import ru.practicum.shareit.item.service.ItemService;
-
 import java.util.List;
 
 @Slf4j
@@ -20,7 +20,7 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public List<ItemDto> getAllItems(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> getAllItems(@RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId) {
         log.info("Запрос списка предметов пользователя с id={}", userId);
         return itemService.getAll(userId);
     }
@@ -39,7 +39,7 @@ public class ItemController {
 
     @PostMapping
     public ItemDto create(
-            @RequestHeader("X-Sharer-User-Id") long userId,
+            @RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId,
             @Valid @RequestBody NewItemDto request) {
         log.info("Запрос на создание предмета {}, пользователь id={}", request.getName(), userId);
         return itemService.create(userId, request);
@@ -47,7 +47,7 @@ public class ItemController {
 
     @PatchMapping("/{id}")
     public ItemDto update(
-            @RequestHeader("X-Sharer-User-Id") long userId,
+            @RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId,
             @PathVariable long id,
             @Valid @RequestBody UpdateItemDto request) {
         log.info("Запрос на изменение информации о предмете с id={}, пользователь id={}", id, userId);
@@ -56,7 +56,7 @@ public class ItemController {
 
     @DeleteMapping("/{id}")
     public void deleteItem(
-            @RequestHeader("X-Sharer-User-Id") long userId,
+            @RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId,
             @PathVariable long id) {
         log.info("Запрос на удаление предмета с id={}, пользователь id={}", id, userId);
         itemService.delete(userId, id);
