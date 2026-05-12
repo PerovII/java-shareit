@@ -99,5 +99,25 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(ItemAvailabilityException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse itemAvailabilityException(ItemAvailabilityException exception) {
+
+        log.warn("Ошибка: {}", exception.getMessage());
+        return new ErrorResponse(
+                Map.of("error", exception.getMessage())
+        );
+    }
+
+    @ExceptionHandler(CommentValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse commentValidationException(CommentValidationException exception) {
+
+        log.warn("Ошибка: {}", exception.getMessage());
+        return new ErrorResponse(
+                Map.of("error", exception.getMessage())
+        );
+    }
+
 
 }

@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.constant.HeaderConstants;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.NewItemDto;
-import ru.practicum.shareit.item.dto.UpdateItemDto;
+import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.service.ItemService;
 import java.util.List;
 
@@ -20,15 +18,17 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public List<ItemDto> getAllItems(@RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId) {
+    public List<ItemWithBookingDto> getAllItems(@RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId) {
         log.info("Запрос списка предметов пользователя с id={}", userId);
         return itemService.getAll(userId);
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItem(@PathVariable long id) {
-        log.info("Запрос информации о предмете id={}", id);
-        return itemService.getItemById(id);
+    public ItemWithBookingDto getItem(
+            @RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId,
+            @PathVariable long id) {
+        log.info("Запрос информации о предмете id={}, пользователь id={}", id, userId);
+        return itemService.getItemById(userId, id);
     }
 
     @GetMapping("/search")
@@ -61,6 +61,16 @@ public class ItemController {
         log.info("Запрос на удаление предмета с id={}, пользователь id={}", id, userId);
         itemService.delete(userId, id);
     }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto createComment(
+            @RequestHeader(HeaderConstants.X_SHARER_USER_ID) long userId,
+            @PathVariable long itemId,
+            @Valid @RequestBody NewCommentDto request) {
+        log.info("Запрос на добавление отзыва к предмету id={}, пользователь id={}", itemId, userId);
+        return itemService.createComment(userId, itemId, request);
+    }
+
 
 
 }
