@@ -40,23 +40,18 @@ public class ItemServiceImpl implements ItemService {
             return Collections.emptyList();
         }
 
-        List<Long> itemIds = items.stream().map(Item::getId).toList();
         LocalDateTime now = LocalDateTime.now();
 
-        List<Booking> relevantBookings = bookingRepository.findLastAndNextBookings(itemIds, now);
+        List<Booking> pastBookings = bookingRepository
+                .findByItemInAndStatusAndStartLessThanEqualOrderByStartDesc(items, BookingStatus.APPROVED, now);
+        List<Booking> futureBookings = bookingRepository
+                .findByItemInAndStatusAndStartGreaterThanOrderByStartAsc(items, BookingStatus.APPROVED, now);
 
-        Map<Boolean, Map<Long, Booking>> partitionedBookings = relevantBookings.stream()
-                .collect(Collectors.partitioningBy(
-                        booking -> !booking.getStart().isAfter(now),
-                        Collectors.toMap(
-                                booking -> booking.getItem().getId(),
-                                booking -> booking
-                        )
-                ));
+        Map<Item, Booking> lastBookings = pastBookings.stream()
+                .collect(Collectors.toMap(Booking::getItem, b -> b, (existing, replacement) -> existing));
 
-        Map<Long, Booking> lastBookings = partitionedBookings.get(true);
-
-        Map<Long, Booking> nextBookings = partitionedBookings.get(false);
+        Map<Item, Booking> nextBookings = futureBookings.stream()
+                .collect(Collectors.toMap(Booking::getItem, b -> b, (existing, replacement) -> existing));
 
         Map<Item, List<Comment>> commentsByItem = commentRepository.findAllByItemIn(items).stream()
                 .collect(Collectors.groupingBy(Comment::getItem));
@@ -65,8 +60,8 @@ public class ItemServiceImpl implements ItemService {
         return items.stream()
                 .map(item -> ItemMapper.mapToItemWithBookingDto(
                         item,
-                        lastBookings.get(item.getId()),
-                        nextBookings.get(item.getId()),
+                        lastBookings.get(item),
+                        nextBookings.get(item),
                         commentsByItem.getOrDefault(item, Collections.emptyList())
                 ))
                 .toList();
@@ -84,15 +79,10 @@ public class ItemServiceImpl implements ItemService {
 
         if (item.getOwner().getId().equals(userId)) {
             LocalDateTime now = LocalDateTime.now();
-            List<Booking> relevantBookings = bookingRepository.findLastAndNextBookings(List.of(item.getId()), now);
-
-            for (Booking booking : relevantBookings) {
-                if (!booking.getStart().isAfter(now)) {
-                    lastBooking = booking;
-                } else {
-                    nextBooking = booking;
-                }
-            }
+            lastBooking = bookingRepository
+                    .findFirstByItemIdAndStatusAndStartLessThanEqualOrderByStartDesc(id, BookingStatus.APPROVED, now);
+            nextBooking = bookingRepository
+                    .findFirstByItemIdAndStatusAndStartGreaterThanOrderByStartAsc(id, BookingStatus.APPROVED, now);
         }
 
         log.info("Запрос предмета id={} выполнен", item.getId());
