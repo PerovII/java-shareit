@@ -36,6 +36,10 @@ public class BookingServiceImpl implements BookingService {
         Item item = itemRepository.findById(request.getItemId())
                 .orElseThrow(() -> new NotFoundException("Предмет не найден"));
 
+        if (item.getOwner().getId().equals(userId)) {
+            throw new UserValidationException("Пользователь является владельцем предмета");
+        }
+
         if (!item.isAvailable()) {
             throw new ItemAvailabilityException("Предмет недоступен для бронирования");
         }
