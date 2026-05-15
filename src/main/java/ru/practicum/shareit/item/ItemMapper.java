@@ -2,10 +2,12 @@ package ru.practicum.shareit.item;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.NewItemDto;
-import ru.practicum.shareit.item.dto.UpdateItemDto;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ItemMapper {
@@ -18,14 +20,17 @@ public final class ItemMapper {
         return item;
     }
 
-    public static ItemDto mapToItemDto(Item item) {
+    public static ItemDto mapToItemDto(Item item, List<Comment> comments) {
         ItemDto dto = new ItemDto();
         dto.setId(item.getId());
         dto.setName(item.getName());
         dto.setDescription(item.getDescription());
         dto.setAvailable(item.isAvailable());
-        dto.setOwner(item.getOwner());
-        dto.setRequest(item.getRequest());
+        dto.setOwnerId(item.getOwner().getId());
+        if (item.getRequest() != null) {
+            dto.setRequestId(item.getRequest().getId());
+        }
+        dto.setComments(comments != null ? comments.stream().map(ItemMapper::mapToCommentDto).toList() : List.of());
         return dto;
     }
 
@@ -35,6 +40,36 @@ public final class ItemMapper {
         if (request.hasAvailable()) item.setAvailable(request.getAvailable());
 
         return item;
+    }
+
+    public static ItemWithBookingDto mapToItemWithBookingDto(Item item, Booking lastBooking, Booking nextBooking, List<Comment> comments) {
+        ItemWithBookingDto dto = new ItemWithBookingDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setDescription(item.getDescription());
+        dto.setAvailable(item.isAvailable());
+        dto.setOwnerId(item.getOwner().getId());
+
+        if (item.getRequest() != null) {
+            dto.setRequestId(item.getRequest().getId());
+        }
+        if (lastBooking != null) {
+            dto.setLastBooking(lastBooking.getStart());
+        }
+        if (nextBooking != null) {
+            dto.setNextBooking(nextBooking.getStart());
+        }
+        dto.setComments(comments != null ? comments.stream().map(ItemMapper::mapToCommentDto).toList() : List.of());
+        return dto;
+    }
+
+    public static CommentDto mapToCommentDto(Comment comment) {
+        CommentDto dto = new CommentDto();
+        dto.setId(comment.getId());
+        dto.setText(comment.getText());
+        dto.setAuthorName(comment.getAuthor().getName());
+        dto.setCreated(comment.getCreated());
+        return dto;
     }
 
 }
