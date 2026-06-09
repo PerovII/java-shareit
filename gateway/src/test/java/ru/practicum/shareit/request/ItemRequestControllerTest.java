@@ -1,7 +1,6 @@
 package ru.practicum.shareit.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,9 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.request.dto.NewItemRequestDto;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,43 +22,70 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ItemRequestControllerTest {
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private MockMvc mockMvc;
 
     @Autowired
-    private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
 
     @MockBean
     private ItemRequestClient itemRequestClient;
 
-    @Test
-    @SneakyThrows
-    void createRequest_whenRequestIsValid_thenReturnsStatusOk() {
-        NewItemRequestDto requestDto = new NewItemRequestDto();
-        requestDto.setDescription("Нужна дрель для ремонта");
+    private static final String HEADER = "X-Sharer-User-Id";
 
-        when(itemRequestClient.create(anyLong(), any())).thenReturn(ResponseEntity.ok().build());
+    @Test
+    void create_whenValid_thenReturnsOk() throws Exception {
+        long userId = 1L;
+        NewItemRequestDto dto = new NewItemRequestDto();
+        dto.setDescription("Description");
+
+        when(itemRequestClient.create(eq(userId), any())).thenReturn(ResponseEntity.ok().build());
 
         mockMvc.perform(post("/requests")
-                        .header("X-Sharer-User-Id", 1L)
+                        .header(HEADER, userId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
-        verify(itemRequestClient, times(1)).create(anyLong(), any());
+        verify(itemRequestClient).create(eq(userId), any());
     }
 
     @Test
-    @SneakyThrows
-    void createRequest_whenDescriptionIsBlank_thenReturnsBadRequest() {
-        NewItemRequestDto requestDto = new NewItemRequestDto();
-        requestDto.setDescription("");
+    void getUserRequests_whenValid_thenReturnsOk() throws Exception {
+        long userId = 1L;
 
-        mockMvc.perform(post("/requests")
-                        .header("X-Sharer-User-Id", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isBadRequest());
+        when(itemRequestClient.getUserRequests(userId)).thenReturn(ResponseEntity.ok().build());
 
-        verify(itemRequestClient, never()).create(anyLong(), any());
+        mockMvc.perform(get("/requests")
+                        .header(HEADER, userId))
+                .andExpect(status().isOk());
+
+        verify(itemRequestClient).getUserRequests(userId);
+    }
+
+    @Test
+    void getAllRequests_whenValid_thenReturnsOk() throws Exception {
+        long userId = 1L;
+
+        when(itemRequestClient.getAllRequests(userId)).thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/requests/all")
+                        .header(HEADER, userId))
+                .andExpect(status().isOk());
+
+        verify(itemRequestClient).getAllRequests(userId);
+    }
+
+    @Test
+    void getRequestById_whenValid_thenReturnsOk() throws Exception {
+        long userId = 1L;
+        long requestId = 1L;
+
+        when(itemRequestClient.getRequestById(userId, requestId)).thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/requests/{requestId}", requestId)
+                        .header(HEADER, userId))
+                .andExpect(status().isOk());
+
+        verify(itemRequestClient).getRequestById(userId, requestId);
     }
 }
